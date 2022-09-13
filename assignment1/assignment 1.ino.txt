@@ -1,0 +1,73 @@
+#include <Keypad.h>
+
+
+//Keypad is used as lock pin
+//Temperature is used it to maintain room temperature
+//PIR sensor is used to alert movement at night
+//ultrasonic sensor is used to alert if dustbin is full
+
+
+const byte ROWS = 4; 
+const byte COLS = 4; 
+int size = 0;
+char hexaKeys[ROWS][COLS] = {
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+float Celsius, Fahrenheit, Kelvin;
+byte rowPins[ROWS] = {9, 8, 7, 6}; 
+byte colPins[COLS] = {5, 4, 3, 2}; 
+
+Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
+
+void setup(){
+   pinMode(3, OUTPUT); // Sets the trigPin as an OUTPUT
+  pinMode(2, INPUT);
+  Serial.begin(9600);
+}
+
+void GetTemp()
+{
+int sensorValue = analogRead(A1);
+Kelvin = (((float(sensorValue) / 1023) * 5) * 100); 
+Celsius = Kelvin-50;
+Fahrenheit = (Celsius * 1.8) +32; 
+}
+
+void loop(){
+  int passkey[4]={0,0,0,0},ans[4]={7,4,1,2},identity[4]={1,1,1,1};
+  char customKey = customKeypad.getKey();
+  
+  if (customKey){
+    Serial.println(customKey);
+    Serial.println(ans[size]);
+    if(customKey == ans[size]){
+      Serial.println(size);
+      passkey[size]=1;
+    }
+    Serial.println(passkey[size]);
+    size++;
+  }
+  GetTemp();
+Serial.print("Celsius: ");
+Serial.println(Celsius);
+Serial.print("Fahrenheit: ");
+Serial.println(Fahrenheit);
+Serial.println();
+  digitalWrite(3, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+  digitalWrite(3, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(3, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  long duration = pulseIn(2, HIGH);
+  // Calculating the distance
+  int distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
+  // Displays the distance on the Serial Monitor
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm"); 
+}
